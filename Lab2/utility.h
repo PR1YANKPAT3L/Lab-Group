@@ -24,6 +24,7 @@ typedef struct
 } REDIRECT;
 
 extern int errno;
+extern char **environ;
 
 void retrieve_full_path(char *fullpath, const char *shortpath);
 
