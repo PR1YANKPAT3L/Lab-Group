@@ -1,26 +1,72 @@
-#### The shell contains the following properties:
+<help>
+Version: 1.0
+Operating System MyShell Project
 
-i. cd <directory> - Change the current default directory to
+The most commonly used MyShell commands are:
+  about      Displays information about MyShell
+  cd         Change the current default directory to <directory> 
+  clear      Clear the screen 
+  environ    List all environment strings
+  echo       Display <comment> on the display followed by a new line
+  pause      Pause operation until <ENTER> is pressed
+  quit       Quit MyShell
+  dir        List contents of directory <directory>
+
+Entire User Manual can be read by entering <help more> command.
+#
+
+<help about>
+MyShell is a command line intepreter, which is the fundamental user interface to an Operating System.
+#
+
+<help version>
+Version: 1.0
+#
+
+<help commands>
+MyShell supports the following commands:
+    cd      clr       environ     echo    help
+    pause   myshell   quit        dir     quit 
+Type "help <command>" to get the details for each command.
+Example: help about - Display the information specific to the shell
+#
+
+<help cd>
+[Usage]: cd <directory>
+[Description]: Change the current default directory to
 <directory>. If the <directory> argument is not present, report
 the current directory. If the directory does not exist an appropriate
 error should be reported. This command should also change the PWD
 environment variable.
+#
 
-ii. clr - Clear the screen.
+<help clr>
+[Usage]: clear
+[Description]: Clear the screen
+#
 
-iii. dir <directory> - List the contents of directory <directory>.
+<help dir>
+[Usage]: dir <directory>
+[Description]:  List the contents of directory <directory>.
+#
 
-iv. environ - List all the environment strings.
+<help environ>
+[Usage]: environ
+[Description]:  List all the environment strings
+#
 
-v. echo <comment> - Display <comment> on the display followed by a
+<help echo>
+[Usage]: echo <comment>
+[Description]:   Display <comment> on the display followed by a
 new line (multiple spaces/tabs may be reduced to a single space).
-vi. help - Display the user manual using the more filter.
+#
 
-vii. pause - Pause operation of the shell until 'Enter' is pressed.
+<help pause>
+[Usage]: pause
+[Description]:  Pause operation of the shell until <ENTER> is pressed
+#
 
-viii. quit - Quit the shell.
-
-ix. The shell environment should contain shell=<pathname>/myshell
-where <pathname>/myshell is the full path for the shell executable
-(not a hardwired path back to your directory, but the one from which
-it was executed).
+<help quit>
+[Usage]: quit
+[Description]:  Quit the shell
+#

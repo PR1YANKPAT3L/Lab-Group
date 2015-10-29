@@ -8,47 +8,24 @@
 #ifndef UTILITY_H_
 #define UTILITY_H_
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#define BUFFER_LEN 1024
+#define MAX_ARGUMENTS 64
+#define MAX_PATH_LENGTH 100
+#define MAX_OPEN 10
 
 // Include your relevant functions declarations here they must start with the 
 // extern keyword such as in the following example:
 // extern void display_help(void);
-/**
- * Control structure for a string tokenizer.  Maintains the
- * tokenizer's state.
- */
-typedef struct tokenizer {
-  char *str;			/* the string to parse */
-  char *pos;			/* position in string */
-} TOKENIZER;
+typedef struct 
+{
+	char *filename;
+	char type[3];
+	char open[3];
+} REDIRECT;
 
-/**
- * Initializes the tokenizer
- *
- * @param string the string that will be tokenized.  Should be non-NULL.
- * @return an initialized string tokenizer on success, NULL on error.
- */
-TOKENIZER *init_tokenizer( char *string );
+extern int errno;
+extern char **environ;
 
-
-
-/**
- * Deallocates space used by the tokenizer.
- * @param tokenizer a non-NULL, initialized string tokenizer
- */
-void free_tokenizer( TOKENIZER *tokenizer );
-
-
-
-/**
- * Retrieves the next token in the string.  The returned token is
- * malloc'd in this function, so you should free it when done.
- *
- * @param tokenizer an initiated string tokenizer
- * @return the next token
- */
-char *get_next_token( TOKENIZER *tokenizer );
+void retrieve_full_path(char *fullpath, const char *shortpath);
 
 #endif /* UTILITY_H_ */

@@ -7,57 +7,112 @@
  */
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
-#include <dirent.h>
-#include <sys/types.h>
 #include <string.h>
+#include <unistd.h>
+//#include <dirent.h>
+//#include <sys/types.h>
 #include "utility.h"
 #include "myshell.h"
 
-// Put macros or constants here using #define
-#define BUFFER_LEN 256
-
-// Put global environment variables here
-
-// Define functions declared in myshell.h here
-
+/**
+ * main constructor of the class
+ * @param  argc argument count
+ * @param  argv arguments
+ * @return      int
+ */
 int main(int argc, char *argv[])
 {
     // Input buffer and and commands
     char buffer[BUFFER_LEN] = { 0 };
+    char pwd[MAX_ARGUMENTS] = { 0 };
     char command[BUFFER_LEN] = { 0 };
     char arg[BUFFER_LEN] = { 0 };
-    TOKENIZER *tokenizer;
+    char path[MAX_ARGUMENTS * 1000];
+    int len;
+    char shell_path[MAX_ARGUMENTS] = "shell=";
+    char readme_path[MAX_ARGUMENTS] = "readme_path=";
+
+    // Get the environment string pointed to by PATH
+    strcpy(path, getenv("PATH"));
+
+    // Append the string pointed to by the path
+    strcat(path, ":");
 
     // Parse the commands provided using argc and argv
-
-    // Perform an infinite loop getting command input from users
-    while (fgets(buffer, BUFFER_LEN, stdin) != NULL)
+    if(argv[0] == "./myshell" && argv[0] == "myshell")
     {
-        // Perform string tokenization to get the command and argument
-        buffer[BUFFER_LEN - 1] = '\0';
-        printf("Parsing '%s'\n", buffer);
+        // Get the length of the argument
+        len = strlen(argv[0]);
 
-        // Check the command and execute the operations for each command
-        // cd command -- change the current directory
-        if (strcmp(command, "cd") == 0)
-        {
-            // your code here
-        }
+        // Get the argument by removing the whitespace
+        while(len && argv[0][len] != '/')
+            len--;
 
-        // other commands here...
-        
-        // quit command -- exit the shell
-        else if (strcmp(command, "quit") == 0)
-        {
-            return EXIT_SUCCESS;
-        }
+        // add the NUL byte to signify end of the string
+        argv[0][len] = '\0';
 
-        // Unsupported command
-        else
-        {
-            fputs("Unsupported command, use help to display the manual\n", stderr);
-        }
+        // Copy the content of the argument
+        strcpy(pwd, argv[0]);
+
+        // Call the function to get the full path
+        retrieve_full_path(pwd, argv[0]);
+
+        // print the directory
+        printf("%s\n", pwd);
     }
+    else
+        strcpy(pwd, getenv("PWD"));
+
+    // Append the pwd value to the path value
+    strcat(path, pwd);
+
+    // Set environment variable
+    setenv("PATH", path, 1);
+
+    // Append the name of the shell to the shell path
+    strcat(shell_path, "/myshell");
+
+    // Put the shell path as environment variable
+    putenv(shell_path);
+
+    // Append the pwd value to read me path
+    strcat(readme_path, pwd);
+
+    // Append readme filename to the path
+    strcat(readme_path, "/README.md");
+
+    // Add the path to the envrionment
+    putenv(readme_path);
+
+    // If there are more than 1 argument
+    if(argc > 1)
+    {
+        // Copy the myshell to buffer
+        strcpy(buffer, "myshell ");
+        
+        // Get each of the arguments
+        for(int i = 1; i < argc; i++)
+        {
+            strcat(buffer, argv[i]);
+            strcat(buffer, "  ");
+        }
+
+        // execute the arguments
+        execute(buffer);
+    }
+    else
+    {
+        // Setup the screen for shell display
+        clear();
+
+        // Display Welcome Message
+        fprintf(stderr, "                   Welcome to MyShell                     \n");
+        fprintf(stderr, "               Type 'help' to get started! \n");
+        fprintf(stderr, "------------------------------------------------------------\n");
+        
+        // Call execute_shell to execute the shell
+        execute_shell(stdin, NULL, NULL);
+    }
+    
     return EXIT_SUCCESS;
 }
