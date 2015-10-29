@@ -1,10 +1,11 @@
-CC = clang
-CFLAGS = -Wall -Wextra -std=c99
+CC = gcc
+#CFLAGS = -Wall -Wextra -std=c99
+CFLAGS= -Wall
 LFLAGS = 
 LIBS = -lm
 SOURCES = myshell.c utility.c
 OBJECTS = $(subst .c,.o,$(SOURCES))
-EXE = myshell.exe
+EXE = myshell
 .PHONY: clean help
 
 %.exe : %.o
