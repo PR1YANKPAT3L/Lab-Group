@@ -8,7 +8,6 @@
 #ifndef UTILITY_H_
 #define UTILITY_H_
 
-<<<<<<< HEAD
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -59,4 +58,3 @@ char *get_next_token( TOKENIZER *tokenizer );
 // extern void display_help(void);
 
 #endif /* UTILITY_H_ */
->>>>>>> master
