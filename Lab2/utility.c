@@ -15,6 +15,7 @@
 
 // Define your utility functions here, these will most likely be functions that you call
 // in your myshell.c source file
+<<<<<<< HEAD
 /**
  * Initializes the tokenizer
  *
@@ -106,3 +107,5 @@ char *get_next_token( TOKENIZER *tokenizer )
   assert( 0 );			/* should never reach here */
   return NULL;			/* but satisfy compiler */
 }
+=======
+>>>>>>> master

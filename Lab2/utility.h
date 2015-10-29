@@ -8,6 +8,7 @@
 #ifndef UTILITY_H_
 #define UTILITY_H_
 
+<<<<<<< HEAD
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -52,3 +53,10 @@ void free_tokenizer( TOKENIZER *tokenizer );
 char *get_next_token( TOKENIZER *tokenizer );
 
 #endif /* UTILITY_H_ */
+=======
+// Include your relevant functions declarations here they must start with the 
+// extern keyword such as in the following example:
+// extern void display_help(void);
+
+#endif /* UTILITY_H_ */
+>>>>>>> master
