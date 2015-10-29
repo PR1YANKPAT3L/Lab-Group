@@ -735,9 +735,128 @@ int execute_commands(char **args, const REDIRECT *INPUTS, const REDIRECT *OUTPUT
 		return 0;
 }
 
+/**
+ * execute the shell with a batchfile
+ * @param  args    arguments
+ * @param  INPUTS  REDIRECT input file
+ * @param  OUTPUTS REDIRECT output file
+ * @param  states  background states
+ * @return         0
+ */
 int batch_command(char **args, const REDIRECT * INPUTS, const REDIRECT * OUTPUTS, int *states)
 {
+	// declare variables
+	FILE *input_file;
+	char file_path[MAX_PATH_LENGTH];
+	int i = 0;
+	char batch_file_path[MAX_PATH_LENGTH];
+	pid_t newpid;
 
+	if(is_batch)
+		fprintf(stderr, "Executing from batchfile: \n");
+
+	// check the state of the redirection
+	if(states[4])
+	{	
+		if(args[1])
+			fprintf(stderr, "[ERROR]: Cannot open more than one input file");
+
+		args[1] = INPUTS->filename;
+		--states[1];
+		i = 1;
+	}
+
+	// get the first argument
+	if(args[1])
+	{
+		// check for input redirection
+		if(states[1] > 0)
+			error_log(-3, NULL, INPUTS + i, states, args[0]);
+
+		// check for third argument
+		if(args[2])
+			error_log(-2, args + 2, NULL, NULL, args[0]);
+
+		// get the full path of the argument
+		retrieve_full_path(file_path, args[1]);
+
+		// get the full path of the batch file
+		retrieve_full_path(batch_file_path, batch_file);
+
+		// get the command line of the shell
+		if(is_batch && !strcmp(batch_file_path, file_path))
+		{
+			fprintf(stderr, "[WARNING]: Causing Infinite loop!");
+			return -5;
+		}
+
+		// open the file to read
+		input_file = fopen(file_path, "r");
+
+		// check if the file is empty
+		if(input_file == NULL)
+		{
+			error_log(-6, NULL, NULL, NULL, args[1]);
+			return -2;
+		}
+
+		// update the batch to 1
+		is_batch = 1;
+
+		// copy the argument to batch file path
+		strcpy(batch_file_path, args[1]);
+
+		// check if there are outputs to be displayed
+		if(!output_num)
+			execute_shell(input_file, NULL, states);
+		else
+			for(i = 0; i < states[2]; i++)
+			{
+				// execute the shell
+				execute_shell(input_file, OUTPUTS + i, states);
+
+				// rewind the file position to the front
+				rewind(input_file);
+
+				// decrement the number of outputs
+				output_num--;
+			}
+
+			// close the file
+			fclose(input_file);
+
+			batch_num = is_batch = 0;
+	}
+	else if(output_num)
+	{
+		// update the batch to 0
+		is_batch = 0;
+
+		// fork the process
+		switch(newpid = fork())
+		{
+			case -1:
+				error_log(-9, NULL, NULL, states, "fork");
+
+			case 0:
+				execute_shell(stdin, OUTPUTS, states);
+				exit(0);
+
+			default:
+				waitpid(newpid, NULL, WUNTRACED);
+		}
+
+		// check if there are more than 1 output to display
+		if(output_num > 1)
+		{
+			fprintf(stderr, "\n");
+			output_num--;
+			batch_command(args, INPUTS, OUTPUTS + 1, states);
+		}
+	}
+
+
+	return 0;
 }
 
 /**
@@ -1103,7 +1222,7 @@ int execute_help_command(char **args, const REDIRECT *OUTPUTS, int *states)
 int error_log(int errortype,char **args,const REDIRECT *  IOputs,const int *states, char * msg) //
 {
 	int i;
-	if(is_batch)  // if executes from batchfile
+	if(is_batch)  
 		fprintf(stderr,"***Line %d of inputfile \"%s\": ",batch_num, batch_file);
 	switch(errortype)
 	{
@@ -1111,66 +1230,58 @@ int error_log(int errortype,char **args,const REDIRECT *  IOputs,const int *stat
 		fprintf(stderr," %s\n",msg);  //
 		break;
 	case  1:
-		fprintf(stderr,"Format Error: invlid argument '%s'(Letter %d), without openfile!\n",open,letter);// <  >>  >
-		fprintf(stderr,"Type 'help redirection'  to get help information abbout '<'  '>>' and '>'\n");
+		fprintf(stderr,"[ERROR]: Enter help redirection' for more help on redirection'\n");
 		break;
 	case  2:
-		fprintf(stderr,"Format Error(Letter %d): '%s' followed by invlid argument '%c'!\n", letter,open,*msg); // <  >> >
-		fprintf(stderr,"Type 'help redirection'  to get help information abbout '<'  '>>' and '>'\n");
+		fprintf(stderr,"[ERROR]: Enter help redirection' for more help on redirection'\n");
 		break;
 
 	case 3:
-        fprintf(stderr,"Sorry: no help information about \"%s\" found in the manual of myshell!\n",msg);
-		fprintf(stderr,"Type \"man %s\" to search in the manual of system.\nNote: press the key <Q> to exit the search.\n",msg);
+        fprintf(stderr,"[ERROR]: No Manual entry was found with the keyword '%s' \n",msg);
 		break;
 	case 4:
-        fprintf(stderr,"Note: no argument is needed after \"%s\" , except the background-execute flag '&' .",msg);   //
-		fprintf(stderr,"Type 'help %s'  to get usage abbout '%s' .\n",msg,msg);
+		fprintf(stderr,"[ERROR]: Parsing Error\n");
 		break;
 
 	case 5:
-		fprintf(stderr,"System Note: can not open more than %d files as %s !\n",MAX_OPEN,msg);
+		fprintf(stderr,"[ERROR]: Cannot open more filed than %d!\n",MAX_OPEN,msg);
 		break;
 
 	case -1:
-		fprintf(stderr,"[WARNING]: \"");
+		fprintf(stderr,"[ERROR]: No command \"");
 		while (*args)
 			fprintf(stderr,"%s ",*args++);
-		fprintf(stderr,"\b\" is not internal command or executive file!\n");
+		fprintf(stderr,"\b\" found!\n");
 		if(is_batch==0&&output_num==0)//
-			fprintf(stderr,"Type \"help command\" to see supported internal commands.\n");
-		break; //abort( );
+			fprintf(stderr,"Type \"help commands\" to see supported internal commands.\n");
+		break; 
 
 	case -2:
-		fprintf(stderr,"Format Warning: invalid  arguments \"" ) ;
+		fprintf(stderr,"[FORMAT]: Invalid arguments supplied \"" ) ;
 		while(*args)
 			fprintf(stderr,"%s ",*args++);
 		fprintf(stderr,"\b\"  after command \"%s\" ! \n",msg);
 		break;
 
 	case -3:
-		fprintf(stderr,"Invalid  input redirection: ");
+		fprintf(stderr,"[ERROR]: Invalid input redirection: ");
 		for(i=0;i<states[1];i++)
 			fprintf(stderr,"\"<%s\" ",IOputs[i].filename);
 		fprintf(stderr,"after \"%s\" !\n",msg);
 		break;
 
-	case -4:   fprintf(stderr,"Invalid  output redirection: ");
+	case -4:   fprintf(stderr,"Invalid output redirection: ");
 		for(i=0;i<states[1];i++)
 			fprintf(stderr,"\"%s%s\" ",IOputs[i].type,IOputs[i].filename);
 		fprintf(stderr,"after \"%s\" !\n",msg);
 		break;
 
 	case -5:
-		fprintf(stderr,"Path Error : \"%s\":  not a directory or not exist!\n",msg);
+		fprintf(stderr,"[ERROR]: \"%s\":  No such file or directory!\n",msg);
 		break;
 
 	case -6:
-		fprintf(stderr,"File Error: can not open file \"%s\"  !\n",msg);
-		break;
-
-	case -7:
-		fprintf(stderr,"Overflow Error: the assigned dirpath is longer than permitted longth(%d)!\n",MAX_PATH_LENGTH);
+		fprintf(stderr,"[ERROR]: cannot open the file: \"%s\"  !\n",msg);
 		break;
 
 	default:

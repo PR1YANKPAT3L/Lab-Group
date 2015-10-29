@@ -1,0 +1,3 @@
+[3;J[H[2JThis is input file
+Calling cd
+/home/shankz/Documents/Lab-Group/Lab-Group/Lab2
