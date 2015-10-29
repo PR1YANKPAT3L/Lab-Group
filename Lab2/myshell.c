@@ -27,6 +27,7 @@ int main(int argc, char *argv[])
     char buffer[BUFFER_LEN] = { 0 };
     char command[BUFFER_LEN] = { 0 };
     char arg[BUFFER_LEN] = { 0 };
+    TOKENIZER *tokenizer;
 
     // Parse the commands provided using argc and argv
 
@@ -34,6 +35,8 @@ int main(int argc, char *argv[])
     while (fgets(buffer, BUFFER_LEN, stdin) != NULL)
     {
         // Perform string tokenization to get the command and argument
+        buffer[BUFFER_LEN - 1] = '\0';
+        printf("Parsing '%s'\n", buffer);
 
         // Check the command and execute the operations for each command
         // cd command -- change the current directory
