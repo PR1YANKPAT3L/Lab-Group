@@ -68,7 +68,8 @@ int main (int argc, char **argv)
 	// Inintialize value pointer during join task
 	void *valid_rows;
 	void *valid_columns;
-	void **valid_squares = malloc(9 * sizeof(void *));
+	void *vs;
+	void **valid_squares = malloc(sizeof(void *) * 9);
 
 	// Create pthreads
 	pthread_create(&prow, NULL, checkRow, (void *) row_col_params); // Row checker thread
@@ -76,31 +77,43 @@ int main (int argc, char **argv)
 	for(int i = 0; i < 9; ++i)
 		pthread_create(&psquares[i], NULL, checkSquare, (void *) &square_params[i]);
 
-
+	// Create thread execution
 	pthread_join(prow, &valid_rows);
 	pthread_join(pcol, &valid_columns);
 	for(int i = 0; i < 9; ++i) {
-		pthread_join(psquares[i], &(valid_squares[i]));
+		pthread_join(psquares[i], &vs);
+		valid_squares[i] = vs;
 	}
 
 	// Check if all rows are valid
-	if(*(int *) valid_rows == 1)
+	if((int) valid_rows == 1)
 		printf("[DEBUG]: All Rows Valid!\n");
 	else
 		printf("[DEBUG]: Rows Not Solved\n");
 
 	// Check if all columns are valid
-	if(*(int *) valid_columns == 1)
+	if((int) valid_columns == 1)
 		printf("[DEBUG]: All Columns Valid!\n");
 	else
 		printf("[DEBUG]: Columns Not Solved\n");
 
-	if(*(int *) valid_squares[2] == 1)
-	{
-		printf("LOL");
-	} else
-		fprintf(stderr, "Err: [%d]", *(int *) valid_squares);
+	// Initalize count variable
+	int count = 0;
 
+	// Loop through each array of valid_squares to
+	// check the returned result from pthread_join
+	for(int i = 0; i < 9; ++i) {
+		// Check if each returned value is 1
+		if((int) valid_squares[i] == 1)
+			// Increment the count
+			count++;
+	}
+
+	// Check if the count is 9
+	if(count == 9)
+		printf("[DEBUG]: All Squares Valid!\n");
+
+	// Free all the threads
 	free((pthread_t *)prow);
 	free((pthread_t *)pcol);
 	free(psquares);
@@ -164,7 +177,6 @@ void *checkRow(void *arg)
 	{
 		// Initialize array size of 10 with 0 as default
 		int row[10] = {0};
-		fprintf(stderr, "\n");
 
 		for(int j = startColumn; j < 9; ++j)
 		{
@@ -210,8 +222,9 @@ void *checkColumn(void *arg)
 			int val = data->puzzle[j][i];
 
 			// check if the value is not 0
-			if(col[val] != 0)
+			if(col[val] != 0) {
 				return (void *) 0;
+			}
 			else
 				col[val] = 1;
 		}
@@ -238,8 +251,9 @@ void *checkSquare(void *arg)
 		for(int j = startColumn; j < startColumn + 3; ++j)
 		{
 			int val = data->puzzle[i][j];
-			if(history[val] != 0)
+			if(history[val] != 0) {
 				return (void *) 0;
+			}
 			else
 				history[val] = 1;
 		}
