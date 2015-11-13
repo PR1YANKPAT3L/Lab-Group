@@ -4,6 +4,7 @@
 #include <pthread.h>
 
 #define INPUT_PATH "/home/shankz/workspace/sudoku_proj/src/puzzle.txt"
+#define OUTPUT_PATH "/home/shankz/workspace/sudoku_proj/src/solution.txt"
 
 /*
  * structure for passing data to threads
@@ -19,6 +20,9 @@ void readInputFile(int puzzle[][9]);
 void *checkRow(void *arg);
 void *checkColumn(void *arg);
 void *checkSquare(void *arg);
+int isAvailable(int puzzle[][9], int row, int col, int num);
+int computeSudoku(int puzzle[][9], int row, int col);
+void printGrid(int puzzle[][9]);
 
 /**
  * Main constructor
@@ -85,17 +89,20 @@ int main (int argc, char **argv)
 		valid_squares[i] = vs;
 	}
 
+	printf("[DEBUG]: Printing Grid from File\n");
+	printGrid(puzzle);
+
 	// Check if all rows are valid
 	if((int) valid_rows == 1)
 		printf("[DEBUG]: All Rows Valid!\n");
 	else
-		printf("[DEBUG]: Rows Not Solved\n");
+		printf("[ERROR]: Rows Not Solved\n");
 
 	// Check if all columns are valid
 	if((int) valid_columns == 1)
 		printf("[DEBUG]: All Columns Valid!\n");
 	else
-		printf("[DEBUG]: Columns Not Solved\n");
+		printf("[ERROR]: Columns Not Solved\n");
 
 	// Initalize count variable
 	int count = 0;
@@ -109,9 +116,46 @@ int main (int argc, char **argv)
 			count++;
 	}
 
-	// Check if the count is 9
 	if(count == 9)
-		printf("[DEBUG]: All Squares Valid!\n");
+		printf("[DEBUG]: All Cells Valid!\n");
+	else
+		printf("[ERROR]: Cells Not Solved\n");
+
+	// Check if the count is 9
+	if((int) valid_rows == 1 && (int) valid_columns == 1)
+		printf("[RESULT]: The input has a valid solution!\n");
+	else
+	{
+		printf("[DEBUG]: Not solved! Attempting to solve the problem...\n\n");
+		if(computeSudoku(puzzle, 0, 0))
+		{
+			// Initialize FILE
+			FILE *fp;
+
+			// Open the file for write
+			fp = fopen(OUTPUT_PATH, "w");
+
+			// Nested Loop to loop through the grid
+			for(int i = 1; i < 10; ++i)
+			{
+				for(int j = 1; j < 10; ++j) {
+					// Write the values to the file and print it on the screen
+					fprintf(fp, " %d ", puzzle[i - 1][j - 1]);
+					printf(" %d ", puzzle[i - 1][j - 1]);
+				}
+
+				// Print next line to the file to move onto next line
+				fprintf(fp, "\n");
+				printf("\n");
+			}
+
+			// Close the file
+			fclose(fp);
+		}
+		else
+			printf("[ERROR]: No Solution Found!");
+	}
+
 
 	// Free all the threads
 	free((pthread_t *)prow);
@@ -184,7 +228,7 @@ void *checkRow(void *arg)
 			int val = data->puzzle[i][j];
 
 			// check if the value is not 0
-			if(row[val] != 0)
+			if(row[val])
 				return (void *) 0;
 			else
 				row[val] = 1;
@@ -222,7 +266,7 @@ void *checkColumn(void *arg)
 			int val = data->puzzle[j][i];
 
 			// check if the value is not 0
-			if(col[val] != 0) {
+			if(col[val]) {
 				return (void *) 0;
 			}
 			else
@@ -233,6 +277,11 @@ void *checkColumn(void *arg)
 	return (void *) 1;
 }
 
+/**
+ * Check to check that each square block contains the digits 1 through 9
+ * @param  void arg
+ * @return      1
+ */
 void *checkSquare(void *arg)
 {
 	// Cast the argument back to structure
@@ -251,7 +300,7 @@ void *checkSquare(void *arg)
 		for(int j = startColumn; j < startColumn + 3; ++j)
 		{
 			int val = data->puzzle[i][j];
-			if(history[val] != 0) {
+			if(history[val]) {
 				return (void *) 0;
 			}
 			else
@@ -260,4 +309,116 @@ void *checkSquare(void *arg)
 	}
 
 	return (void *) 1;
+}
+
+/*
+ * Print the grid in the console
+ * @param int puzzle[][9] Array of 9x9 grid containing the puzzle values
+ * @return none
+ */
+void printGrid(int puzzle[][9])
+{
+	// Nested loop to print the 2D array
+	for(int i = 0; i < 9; ++i)
+	{
+		printf("\n");
+		for(int j = 0; j < 9; ++j)
+		{
+			printf(" %d ", puzzle[i][j]);
+		}
+	}
+
+	printf("\n\n");
+}
+
+/**
+ * Check if the number is available for placement given the position
+ * @param int puzzle[][9] Array containing 9x9 sudoku puzzle
+ * @param int row position to start from row
+ * @param int column position to start from column
+ * @param int num number to be placed
+ * @return return 0 or 1 based on whether the number given is available for placement
+ */
+int isAvailable(int puzzle[][9], int row, int column, int num)
+{
+	// Get the row to start
+	int rowStart = (row / 3) * 3;
+	// Get the column to start
+	int colStart = (column / 3) * 3;
+
+	// Loop through the row to check the position
+	for(int i = 0; i < 9; ++i)
+	{
+		// check if the row contains the number
+		if(puzzle[row][i] == num)
+			return 0;
+
+		// Check if the column contains the number
+		if(puzzle[i][column] == num)
+			return 0;
+
+		if(puzzle[rowStart + (i % 3)][colStart + (i / 3)] == num)
+			return 0;
+	}
+
+	// Return 1 if the number is available
+	return 1;
+}
+
+/**
+ * Compute the solution for given sudoku problem
+ * @param int puzzle[][9] Array of 9x9 sudoku puzzle values
+ * @param int row	position of row to start
+ * @param int col 	position of col to start
+ * @return		0 or 1 based on the results
+ *
+ */
+int computeSudoku(int puzzle[][9], int row, int column)
+{
+	// Termination case for recursive method
+	// check if the row and column are within the grid boundaries
+	if(row < 9 && column < 9)
+	{
+		// go through reach row and column to check if the number contains 0
+		// execute the block if the element contains the value of 0
+		if(puzzle[row][column])
+		{
+			// Check for end of array in column if the next position is not out of bounds
+			// call recursion and increment the column
+			if((column + 1) < 9)
+				return computeSudoku(puzzle, row, column + 1); // move to next column
+			// Check for end of array in row if the next position is not out of bounds
+			else if((row + 1) < 9)
+				return computeSudoku(puzzle, row + 1, 0); // move to the next row
+			else
+				// Return 1 is the row and the column meet sudoku requirements of non duplicate 1-9 values
+				return 1;
+		}
+		else
+		{
+			// If the value contains value other than 0
+			// Execute for loop to loop through the array
+			for(int i = 0; i < 9; ++i)
+			{
+				// Check if the number is available for insert
+				// isAvaialbe will return 0 or 1 based on whether if the position is available
+				if(isAvailable(puzzle, row, column, i + 1))
+				{
+					// Assign the value to the position if its available
+					puzzle[row][column] = i + 1;
+
+					// Check if the method returns 1, then return 1 or else set the element to 0
+					if(computeSudoku(puzzle, row, column))
+						return 1;
+					else
+						puzzle[row][column] = 0;
+				}
+			}
+		}
+		// Return 0 stating error occured in recursion
+		return  0;
+	}
+	else
+		// Return 1 stating that the solution is valid
+		return 1;
 }
