@@ -38,17 +38,6 @@ typedef struct {
 	int need[NUM_CUSTOMERS][NUM_RESOURCES];
 } BANK;
 
-typedef struct {
-	// Number of customers
-	int currCustomer;
-
-	// Requested data
-	int req [NUM_RESOURCES];
-
-	// Released data
-	int rel [NUM_RESOURCES];
-} THREAD_DATA;
-
 int customerData[NUM_RESOURCES] = { 0 };
  
 /**
